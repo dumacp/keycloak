@@ -24,10 +24,14 @@ type keycloak struct {
 }
 
 type Keycloak interface {
-	TokenRequest(context.Context, string, string) (*oauth2.Token, error)
+	TokenRequest(ctx context.Context, username string, password string) (*oauth2.Token, error)
 	TokenSource(context.Context, *oauth2.Token) oauth2.TokenSource
 	UserInfo(context.Context, oauth2.TokenSource) (map[string]interface{}, error)
 	Client(context.Context, *oauth2.Token) *http.Client
+}
+
+func NewClientContext(ctx context.Context, client *http.Client) context.Context {
+	return oidc.ClientContext(ctx, client)
 }
 
 func NewConfig(ctx context.Context, config *ServerConfig) (Keycloak, error) {
@@ -69,6 +73,11 @@ func (s *keycloak) TokenRequest(ctx context.Context, username, password string) 
 }
 
 /**/
+
+// TokenSource returns a TokenSource that returns t until t expires,
+// automatically refreshing it as necessary using the provided context.
+//
+// Most users will use Config.Client instead.
 func (s *keycloak) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
 
 	return s.oauth2Config.TokenSource(ctx, t)
